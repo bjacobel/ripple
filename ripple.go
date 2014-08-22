@@ -32,10 +32,10 @@ func NewContext() *Context {
 
 // A Ripple application. Use NewApplication() to build it.
 type Application struct {
-	controllers map[string]interface{}
-	routes      []Route
-	contentType string
-	baseUrl     string
+	controllers   map[string]interface{}
+	routes        []Route
+	contentType   string
+	baseUrl       string
 	parsedBaseUrl *url.URL
 }
 
@@ -134,6 +134,7 @@ func (this *Application) ServeHTTP(writter http.ResponseWriter, request *http.Re
 	context := this.Dispatch(request)
 	r := this.prepareServeHttpResponseData(context)
 	writter.Header().Set("Content-Type", this.contentType)
+	writter.Header().Set("Access-Control-Allow-Origin", "http://localhost:9000")
 	writter.WriteHeader(r.Status)
 	writter.Write([]byte(r.Body))
 }
@@ -174,13 +175,13 @@ func (this *Application) serializeResponseBody(body interface{}) (string, error)
 		}
 
 	default:
-		
+
 		contentType := this.contentType
 		if contentType != "application/json" { // Currently, only JSON is supported
 			log.Printf("Unsupported content type: %s! Defaulting to application/json.", this.contentType)
 			contentType = "application/json"
 		}
-		
+
 		if contentType == "application/json" {
 			var b []byte
 			b, err = json.Marshal(body)
@@ -251,11 +252,11 @@ type MatchRequestResult struct {
 func (this *Application) matchRequest(request *http.Request) MatchRequestResult {
 	var output MatchRequestResult
 	output.Success = false
-		
+
 	path := request.URL.Path
 	path = path[len(this.parsedBaseUrl.Path):len(path)]
 	pathTokens := splitPath(path)
-	
+
 	for routeIndex := 0; routeIndex < len(this.routes); routeIndex++ {
 		route := this.routes[routeIndex]
 		patternTokens := splitPath(route.Pattern)
